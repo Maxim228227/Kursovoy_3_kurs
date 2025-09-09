@@ -636,7 +636,12 @@ WHERE
             public int? Discaunt { get; set; }
         }
 
-
+        private static void Maxon()
+        {
+            string name = "Maxon";
+            int age = 20;
+            int hight = 185;
+        }
 
     }
 }
