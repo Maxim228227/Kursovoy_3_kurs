@@ -55,6 +55,7 @@
         </Style>
     </Window.Resources>
 
+
     <Grid Margin="20">
         <StackPanel VerticalAlignment="Center" HorizontalAlignment="Center" >
             <TextBlock Text="Вход в систему" FontSize="20" FontWeight="Bold" Margin="0,0,0,20" HorizontalAlignment="Center" Foreground="#333333"/>
@@ -66,6 +67,9 @@
             <PasswordBox x:Name="PasswordBox"/>
 
             <Button Content="Войти" Click="LoginButton_Click" HorizontalAlignment="Center" FontSize="18" Width="150"/>
+
+            <Frame x:Name="MainFrame" NavigationUIVisibility="Hidden"/>
+
         </StackPanel>
     </Grid>
 </Window>

@@ -1,0 +1,32 @@
+﻿<Window x:Class="Kursovoy.CostEditorWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Стоимость" Height="300" Width="400" WindowStartupLocation="CenterOwner">
+    <Grid Margin="10">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <Label Content="Тип услуги:"/>
+        <TextBox x:Name="ServiceTypeBox" Grid.Row="0" Margin="120,0,0,5"/>
+
+        <Label Content="Должность (ID):" Grid.Row="1"/>
+        <TextBox x:Name="PositionIDBox" Grid.Row="1" Margin="120,0,0,5"/>
+
+        <Label Content="Цена за единицу:" Grid.Row="2"/>
+        <TextBox x:Name="UnitPriceBox" Grid.Row="2" Margin="120,0,0,5"/>
+
+        <Label Content="Иностранный студент?" Grid.Row="3"/>
+        <CheckBox x:Name="IsForeignBox" Grid.Row="3" Margin="150,5,0,5"/>
+
+        <Button Content="Показать должности" Grid.Row="4" Margin="0,10,0,0" Height="20" Width="150" HorizontalAlignment="Center" Click="ShowPositions_Click"/>
+
+        <Button Content="Сохранить" Grid.Row="5" Margin="0,-80,0,0" Height="20" Width="150" HorizontalAlignment="Center" Click="SaveButton_Click"/>
+        
+    </Grid>
+</Window>

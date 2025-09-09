@@ -1,0 +1,115 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Window x:Class="Kursovoy.AdminWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Окно администратора" Height="700" Width="1000"
+        Background="#f2f2f2" WindowStartupLocation="CenterScreen">
+    <Window.Resources>
+        <Style TargetType="Button">
+            <Setter Property="Margin" Value="5"/>
+            <Setter Property="Padding" Value="8,4"/>
+            <Setter Property="FontSize" Value="14"/>
+            <Setter Property="Background" Value="#4CAF50"/>
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="BorderBrush" Value="Transparent"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" 
+                                CornerRadius="4">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style TargetType="DataGrid">
+            <Setter Property="RowBackground" Value="#ffffff"/>
+            <Setter Property="AlternatingRowBackground" Value="#eeeeee"/>
+            <Setter Property="GridLinesVisibility" Value="None"/>
+            <Setter Property="BorderBrush" Value="LightGray"/>
+            <Setter Property="BorderThickness" Value="1"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="HeadersVisibility" Value="Column"/>
+        </Style>
+    </Window.Resources>
+
+    <Grid>
+        <TabControl x:Name="AdminTabControl" Margin="10">
+
+            <!-- Пользователи -->
+            <TabItem Header="Пользователи">
+                <Grid>
+                    <DataGrid x:Name="UsersDataGrid" AutoGenerateColumns="True" Margin="10"/>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="10">
+                        <Button Content="Добавить" Click="AddUser_Click"/>
+                        <Button Content="Редактировать" Click="EditUser_Click"/>
+                        <Button Content="Удалить" Click="DeleteUser_Click"/>
+                    </StackPanel>
+                </Grid>
+            </TabItem>
+
+            <!-- Студенты -->
+            <TabItem Header="Студенты">
+                <Grid>
+                    <DataGrid x:Name="StudentsDataGrid" AutoGenerateColumns="True" Margin="10"/>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="10">
+                        <Button Content="Добавить" Click="AddStudent_Click"/>
+                        <Button Content="Редактировать" Click="EditStudent_Click"/>
+                        <Button Content="Удалить" Click="DeleteStudent_Click"/>
+                    </StackPanel>
+                </Grid>
+            </TabItem>
+
+            <!-- Преподаватели -->
+            <TabItem Header="Преподаватели">
+                <Grid>
+                    <DataGrid x:Name="TeachersDataGrid" AutoGenerateColumns="True" Margin="10"/>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="10">
+                        <Button Content="Добавить" Click="AddTeacher_Click"/>
+                        <Button Content="Редактировать" Click="EditTeacher_Click"/>
+                        <Button Content="Удалить" Click="DeleteTeacher_Click"/>
+                    </StackPanel>
+                </Grid>
+            </TabItem>
+
+            <!-- Платежи -->
+            <TabItem Header="Платежи">
+                <Grid>
+                    <DataGrid x:Name="PaymentsDataGrid" AutoGenerateColumns="True" Margin="10"/>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="10">
+                        <Button Content="Экспорт в PDF" Click="ExportSelectedPaymentToTXT_Click"/>
+                    </StackPanel>
+                </Grid>
+            </TabItem>
+
+            
+            <TabItem Header="Задолженности">
+                <Grid>
+                    <DataGrid x:Name="FinesDataGrid" AutoGenerateColumns="True" Margin="10"/>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="10">
+                        <Button Content="Добавить" Click="AddFineButton_Click"/>
+                        <!--<Button Content="Редактирование" Click="EditFineButton_Click"/>-->
+                        <Button Content="Удалить" Click="DeleteFine_Click"/>
+                    </StackPanel>
+                </Grid>
+            </TabItem>
+
+            <!-- Стоимости -->
+            <TabItem Header="Стоимость">
+                <Grid>
+                    <DataGrid x:Name="CostsDataGrid" AutoGenerateColumns="True" Margin="10"/>
+                    <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Bottom" Margin="10">
+                        <Button Content="Добавить" Click="AddCost_Click"/>
+                        <Button Content="Редактировать" Click="EditCost_Click"/>
+                        <Button Content="Удалить" Click="DeleteCost_Click"/>
+                    </StackPanel>
+                </Grid>
+            </TabItem>
+
+
+        </TabControl>
+    </Grid>
+</Window>

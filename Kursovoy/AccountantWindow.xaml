@@ -1,0 +1,121 @@
+﻿<Page x:Class="Kursovoy.Pages.BugalteriaPage"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+      xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+      xmlns:local="clr-namespace:Kursovoy.Pages"
+      mc:Ignorable="d"
+      d:DesignHeight="450" d:DesignWidth="800"
+      Title="Бухгалтерия">
+
+    <Grid Background="White">
+        <TabControl Margin="10">
+            <!-- Вкладка "Сводка" -->
+            <TabItem Header="Сводка">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="20">
+                        <TextBlock Text="Общая статистика" FontSize="24" FontWeight="Bold" Margin="0,0,0,20"/>
+
+                        <WrapPanel Margin="0,0,0,10">
+                            <TextBlock Text="Общий доход: " FontWeight="Bold" Width="250"/>
+                            <TextBlock Name="TotalIncomeText" Text="0 руб"/>
+                        </WrapPanel>
+
+                        <WrapPanel Margin="0,0,0,10">
+                            <TextBlock Text="Количество студентов: " FontWeight="Bold" Width="250"/>
+                            <TextBlock Name="StudentCountText" Text="0"/>
+                        </WrapPanel>
+
+                        <WrapPanel Margin="0,0,0,10">
+                            <TextBlock Text="Количество иностранных студентов: " FontWeight="Bold" Width="250"/>
+                            <TextBlock Name="InternationalStudentCountText" Text="0"/>
+                        </WrapPanel>
+
+                        <WrapPanel Margin="0,0,0,10">
+                            <TextBlock Text="Количество преподавателей: " FontWeight="Bold" Width="250"/>
+                            <TextBlock Name="TeacherCountText" Text="0"/>
+                        </WrapPanel>
+
+                        <WrapPanel Margin="0,0,0,10">
+                            <TextBlock Text="Общая сумма задолженностей: " FontWeight="Bold" Width="250"/>
+                            <TextBlock Name="TotalFinesText" Text="0 руб"/>
+                        </WrapPanel>
+
+                        <WrapPanel Margin="0,0,0,10">
+                            <TextBlock Text="Средний платёж: " FontWeight="Bold" Width="250"/>
+                            <TextBlock Name="AveragePaymentText" Text="0 руб"/>
+                        </WrapPanel>
+
+                        <WrapPanel Margin="0,0,0,10">
+                            <TextBlock Text="Количество произведённых платежей: " FontWeight="Bold" Width="250"/>
+                            <TextBlock Name="TotalPaymentsText" Text="0"/>
+                        </WrapPanel>
+
+                        <WrapPanel Margin="0,0,0,10">
+                            <TextBlock Text="Количество студентов с неоплаченными задолженностями:  " FontWeight="Bold" Width="357"/>
+                            <TextBlock x:Name="StudentsWithFinesText" Margin="10,0,0,0" Text="0"/>
+                        </WrapPanel>
+
+                        <WrapPanel Margin="0,0,0,10">
+                            <TextBlock Text="Изменение дохода (год к году): " FontWeight="Bold" Width="250"/>
+                            <TextBlock Name="IncomeTrendText" Text="0%"/>
+                        </WrapPanel>
+
+                        <WrapPanel Margin="0,0,0,10">
+                            <TextBlock Text="Просроченные платежи: " FontWeight="Bold" Width="250"/>
+                            <TextBlock Name="OverduePaymentsText" Text="0"/>
+                        </WrapPanel>
+
+                        <WrapPanel Margin="0,0,0,10">
+                            <TextBlock Text="Средний долг по штрафам на студента: " FontWeight="Bold" Width="250"/>
+                            <TextBlock Name="AverageFineDebtText" Text="0 руб"/>
+                        </WrapPanel>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <!-- Вкладка "Отчёты" -->
+            <TabItem Header="Отчёты">
+                <StackPanel Margin="20">
+                    <TextBlock Text="История платежей" FontSize="20" FontWeight="Bold" Margin="0,0,0,10"/>
+                    <DataGrid Name="PaymentsDataGrid" AutoGenerateColumns="False" Height="300" Margin="0,0,0,10">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Идентификатор платежа" Binding="{Binding PaymentID}" />
+                            <DataGridTextColumn Header="Фамилия и имя студента" Binding="{Binding StudentName}" />
+                            <DataGridTextColumn Header="Сумма" Binding="{Binding Amount}" />
+                            <DataGridTextColumn Header="Скидка" Binding="{Binding Discaunt}" />
+                            <DataGridTextColumn Header="Дата платежа" Binding="{Binding PaymentDate}" />
+                            <DataGridTextColumn Header="Название предмета" Binding="{Binding SubjectName}" />
+                            <DataGridTextColumn Header="Номер карты" Binding="{Binding NumberCard}" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <TextBlock Text="История задолженностей" FontSize="20" FontWeight="Bold" Margin="0,20,0,10"/>
+                    <DataGrid Name="FinesDataGrid" AutoGenerateColumns="False" Height="200" Margin="0,0,0,10">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Идентификатор задолженности" Binding="{Binding FineID}" />
+                            <DataGridTextColumn Header="Фамилия и имя студента" Binding="{Binding StudentName}" />
+                            <DataGridTextColumn Header="Цена за единицу" Binding="{Binding UnitPrice}" />
+                            <DataGridTextColumn Header="Скидка" Binding="{Binding Discount}" />
+                            <DataGridTextColumn Header="Дата по какое число оплатить" Binding="{Binding DateIssued}" />
+                            <DataGridTextColumn Header="Тип услуги" Binding="{Binding ServiceType}" />
+                        </DataGrid.Columns>
+                    </DataGrid>
+
+                    <StackPanel Orientation="Horizontal" Margin="0,10,0,0" HorizontalAlignment="Left">
+                        <Button Content="Экспорт в PDF" Width="150" Margin="0,0,10,0" Click="ExportToPdf_Click"/>
+                        <Button Content="Экспорт в CSV" Width="150" Margin="0,0,10,0" Click="ExportToCsv_Click"/>
+                        <Button Content="Печать отчета" Width="150" Margin="0,0,10,0" Click="PrintReport_Click"/>
+                        <Button Content="Фильтр по дате" Width="150" Click="FilterByDate_Click"/>
+                    </StackPanel>
+
+                    <TextBlock Text="Итоговая сумма платежей: " FontWeight="Bold" Margin="0,20,0,5"/>
+                    <TextBlock Name="TotalReportSumText" Text="0 руб" FontSize="14"/>
+
+                    <TextBlock Text="Среднее значение платежей: " FontWeight="Bold" Margin="0,10,0,5"/>
+                    <TextBlock Name="AverageReportPaymentText" Text="0 руб" FontSize="14"/>
+                </StackPanel>
+            </TabItem>
+        </TabControl>
+    </Grid>
+</Page>

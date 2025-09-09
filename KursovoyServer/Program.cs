@@ -1,8 +1,11 @@
 ﻿using System;
 using System.Data.SqlClient;
+using System.Globalization;
 using System.Net;
 using System.Net.Sockets;
 using System.Text;
+using System.Text.RegularExpressions;
+using KursovoyServer.Models;
 
 namespace KursovoyServer
 {
@@ -54,12 +57,20 @@ namespace KursovoyServer
                     {
                         return "Использование: login <username> <password>";
                     }
+
+                    
                     string username = parts[1];
                     string password = parts[2];
                     string role;
                     int? userId;
                     string firstName;
                     string lastName;
+
+                    //if (parts[1] == "admin" || parts[2] == "admin")
+                    //{
+                    //    role = "admin";
+                    //    return $"Успешный вход.{role}";
+                    //}
 
                     bool isValid = ValidateUser(username, password, out role, out userId, out firstName, out lastName);
                     return isValid ? $"Успешный вход. Ваша роль: {role}, ID: {userId}, Фамилия: {firstName}, Имя: {lastName}" : "Неверные учетные данные";
@@ -85,7 +96,7 @@ namespace KursovoyServer
                 case "bindcart":
 
                     string[] delenie = parts[2].Split('|');
-                    Console.WriteLine(" 1 = " + delenie[0] + " 2 = " + delenie[1] + " 3 = " + delenie[2]);
+                  //  Console.WriteLine(" 1 = " + delenie[0] + " 2 = " + delenie[1] + " 3 = " + delenie[2]);
 
                     int userID;
                     if (int.TryParse(parts[1].Trim(), out userID))
@@ -99,10 +110,87 @@ namespace KursovoyServer
                     bool result = AddCards(userID, delenie[0].ToString(), delenie[1].ToString(), delenie[2].ToString());
 
                     return result ? "true" : "false";
-                    
-                    
+
+                case "payfine":
+
+                    Console.WriteLine(" 1 = " + parts[0] + " 2 = " + parts[1] + " 3/" + parts[2] + "/" + parts[3] + "/" + parts[4] + "/" + parts[5] + "/"
+                + parts[6] + "/" + parts[7] + "/");
+                    var regex = new Regex(@"payfine ID: (\d+) (\d+) Цена: ([\d,]+)");
+                    var match = regex.Match(command);
+                    // Регулярное выражение для извлечения информации между "Предмет:" и "Скидка:"
+                    var regex1 = new Regex(@"Предмет:\s*(.*?)\s*Cкидка:");
+                    var match1 = regex1.Match(command);
+
+                   
+                    if (match.Success)
+                    {
+                        int fineID = int.Parse(match.Groups[1].Value);
+                        int studentID_pay = int.Parse(match.Groups[2].Value);
+                        string amountStr = match.Groups[3].Value.Replace(',', '.');
+                        string numberCard = parts[7].ToString();
+                        string subject = parts[8].ToString();
+
+                        if(subject.Trim() == "Оплата")
+                        {
+                            subject = subject + " за обучение";
+                        }
+
+                        if (match1.Success)
+                        {
+                            subject = match1.Groups[1].Value.Trim();
+                            Console.WriteLine("Предмет: " + subject);
+                        }
+                        else
+                        {
+                            Console.WriteLine("Не удалось найти Предмет.");
+                        }
+                        //string discaunt = parts[9].ToString();
+                        int discaunt = int.Parse(parts[parts.Length - 1]);
+
+                        if (decimal.TryParse(amountStr, NumberStyles.Any, CultureInfo.InvariantCulture, out decimal amount))
+                        {
+                            Console.WriteLine($"Оплата штрафа ID:{fineID}, Студент ID:{studentID_pay}, Сумма: {amount}, Скидка: {discaunt}, предмет: |{subject}|");
+
+                            bool paymentAdded = AddPayment(studentID_pay, fineID, amount, numberCard, subject, discaunt);
+                            if (paymentAdded && RemoveFine(fineID))
+                            {
+                                return "OK";
+                            }
+                            return "ERROR: Ошибка при обработке оплаты";
+                        }
+                        return "ERROR: Неверный формат суммы";
+                    }
+                    return "ERROR: Неверный формат команды";
 
 
+                case "getpayments":
+                    {
+                        string UserID = parts[1].ToString();
+                        // Извлекаем StudentID на основании UserID
+                        int studentID = GetStudentID(UserID);
+                        if (studentID == -1)
+                        {
+                            return "ERROR: Студент не найден";
+                        }
+                        Console.WriteLine("Этап 1 ="+UserID+"|");
+                        // Получаем платежи для данного StudentID
+                        var payments = GetPaymentsByStudentID(studentID);
+                        if (payments != null && payments.Count > 0)
+                        {
+                            // Формируем ответ с платежами
+                            StringBuilder response = new StringBuilder();
+                            foreach (var payment in payments)
+                            {
+                                response.AppendLine($"PaymentID: {payment.PaymentID}, StudentID: {payment.StudentID}, " +
+                                                    $"Amount: {payment.Amount}, PaymentDate: {payment.PaymentDate:dd.MM.yyyy}, " +
+                                                    $"CardNumber: {payment.CardNumber}, SubjectName: {payment.SubjectName}, Discaunt: {payment.Discaunt}");
+                            }
+                            Console.WriteLine("Этап 2 ="+ response.ToString());
+                            return response.ToString();
+                        }
+
+                        return "ERROR: Платежи не найдены";
+                    }
 
                 default:
                     return "Неизвестная команда.";
@@ -162,6 +250,56 @@ namespace KursovoyServer
 
             using (SqlConnection connection = new SqlConnection(connectionString))
             {
+                connection.Open();
+                string quri = @"SELECT *
+FROM Users
+WHERE Username = @username AND Password = @password AND RoleID = 1;";
+                using (SqlCommand cmd = new SqlCommand(quri, connection))
+                {
+                    cmd.Parameters.AddWithValue("@username", username);
+                    cmd.Parameters.AddWithValue("@password", password);
+                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    {
+                        if (reader.Read())
+                        {
+                            role = "admin";
+                            userId = (int)reader["UserID"];
+                            firstName = "Кто";
+                            lastName = "Вы";
+                            Console.WriteLine($"Роль = {role}, Пользовательский ID = {userId}, Имя = {firstName}, Фамилия = {lastName}");
+                            return true;
+                        }
+                    }
+                }
+            }
+
+            using (SqlConnection connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+                string quri = @"SELECT *
+FROM Users
+WHERE Username = @username AND Password = @password AND RoleID = 2;";
+                using (SqlCommand cmd = new SqlCommand(quri, connection))
+                {
+                    cmd.Parameters.AddWithValue("@username", username);
+                    cmd.Parameters.AddWithValue("@password", password);
+                    using (SqlDataReader reader = cmd.ExecuteReader())
+                    {
+                        if (reader.Read())
+                        {
+                            role = "Bugalter";
+                            userId = (int)reader["UserID"];
+                            firstName = "Кто";
+                            lastName = "Вы";
+                            Console.WriteLine($"Роль = {role}, Пользовательский ID = {userId}, Имя = {firstName}, Фамилия = {lastName}");
+                            return true;
+                        }
+                    }
+                }
+            }
+
+            using (SqlConnection connection = new SqlConnection(connectionString))
+                {
                 connection.Open();
                 string query = @"
             SELECT u.RoleID, u.UserID, s.FirstName, s.LastName 
@@ -256,18 +394,19 @@ namespace KursovoyServer
                 string query = @"
 SELECT 
     f.FineID,
-    t.FullName,
-    q.Discription,
+    t.FullName AS TeacherName,
+    q.Discription AS SubjectDescription,
     c.ServiceType,
     c.UnitPrice,
-    f.DateIssued
+    f.DateIssued,
+f.Discount
 FROM 
     Fines f
-JOIN 
+LEFT JOIN 
     Teachers t ON f.TeacherID = t.TeacherID
-JOIN 
+LEFT JOIN 
     Costs c ON f.CostID = c.CostID
-JOIN 
+LEFT JOIN 
     AcademicSubjects q ON f.SubjectID = q.SubjectID
 JOIN 
     Students s ON f.StudentID = s.StudentID  -- Соединение с таблицей Students
@@ -281,15 +420,26 @@ WHERE
                         while (reader.Read())
                         {
                             int fineId = reader.GetInt32(0);
-                            string fullName = reader.GetString(1);
-                            string discription = reader.GetString(2);
-                            string serviceType = reader.GetString(3);
-                            decimal unitPrice = reader.GetDecimal(4);
+
+                            // Проверка на NULL и присвоение значений по умолчанию
+                            string fullName = reader.IsDBNull(1) ? "Нет данных" : reader.GetString(1);
+                            string discription = reader.IsDBNull(2) ? "Нет данных" : reader.GetString(2);
+                            string serviceType = reader.IsDBNull(3) ? "Нет данных" : reader.GetString(3);
+                            decimal unitPrice = reader.IsDBNull(4) ? 0 : reader.GetDecimal(4);
                             DateTime dateIssued = reader.GetDateTime(5);
+                            int discount;
+                            if (reader.IsDBNull(6))
+                            {
+                                discount = 0; // значение по умолчанию, если данных нет
+                            }
+                            else
+                            {
+                                discount = reader.GetInt32(6); // получаем значение как int
+                            }
 
-                            Console.WriteLine($"ID: {fineId}, Преподаватель: {fullName}, Предмет: {discription}, Услуга: {serviceType}, Цена: {unitPrice} рублей, Дата: {dateIssued.ToShortDateString()}");
+                            Console.WriteLine($"ID: {fineId}, Преподаватель: {fullName}, Предмет: {discription}, Услуга: {serviceType}, Цена: {unitPrice} рублей, Дата: {dateIssued.ToShortDateString()}  | Cкидка: |{discount}| ");
 
-                            debts.Add($"ID: {fineId} | Преподаватель: {fullName} | Предмет: {discription} | Услуга: {serviceType} | Цена: {unitPrice} рублей | Дата: {dateIssued.ToShortDateString()}");
+                            debts.Add($"ID: {fineId} | Преподаватель: {fullName} | Предмет: {discription} | Услуга: {serviceType} | Цена: {unitPrice} рублей | Дата: {dateIssued.ToShortDateString()} | Cкидка: {discount} ");
                         }
                     }
                 }
@@ -302,5 +452,191 @@ WHERE
 
             return string.Join(";", debts);
         }
+
+        private static bool AddPayment(int userId, int fineId, decimal amount, string numberCard, string subject, int discaunt)
+        {
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+
+                    // Получаем StudentID по UserID
+                    int studentId;
+                    string studentQuery = @"SELECT StudentID FROM Students WHERE UserID = @UserID";
+
+                    using (SqlCommand studentCmd = new SqlCommand(studentQuery, connection))
+                    {
+                        studentCmd.Parameters.AddWithValue("@UserID", userId);
+                        object result = studentCmd.ExecuteScalar();
+
+                        if (result != null)
+                        {
+                            studentId = Convert.ToInt32(result);
+                        }
+                        else
+                        {
+                            Console.WriteLine("Студент не найден.");
+                            return false;
+                        }
+                    }
+
+                    // Получаем CardID по номеру карты
+                    int cardId;
+                    string cardQuery = @"SELECT CardID FROM Cards WHERE NumberCard = @NumberCard";
+
+                    using (SqlCommand cardCmd = new SqlCommand(cardQuery, connection))
+                    {
+                        cardCmd.Parameters.AddWithValue("@NumberCard", numberCard);
+                        object result = cardCmd.ExecuteScalar();
+
+                        if (result != null)
+                        {
+                            cardId = Convert.ToInt32(result);
+                        }
+                        else
+                        {
+                            Console.WriteLine("Карта не найдена.");
+                            return false;
+                        }
+                    }
+
+                    Console.WriteLine($"Номер карты = {numberCard} CardID = {cardId}");
+
+                    // Запрос на вставку
+                    string query = @"INSERT INTO Payments 
+                             (StudentID, Amount, PaymentDate, CardID, SubjectName, Discaunt) 
+                             VALUES 
+                             (@StudentID, @Amount, @PaymentDate, @CardID, @SubjectName, @Discaunt)";
+
+                    using (SqlCommand cmd = new SqlCommand(query, connection))
+                    {
+                        cmd.Parameters.AddWithValue("@StudentID", studentId); // Используем найденный StudentID
+                        cmd.Parameters.AddWithValue("@Amount", amount);
+                        cmd.Parameters.AddWithValue("@PaymentDate", DateTime.Now);
+                        cmd.Parameters.AddWithValue("@CardID", cardId); // Используем найденный CardID
+                        cmd.Parameters.AddWithValue("@SubjectName", subject);
+                        cmd.Parameters.AddWithValue("@Discaunt", discaunt);
+
+                        return cmd.ExecuteNonQuery() > 0;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Ошибка при добавлении платежа: {ex.Message}");
+                return false;
+            }
+        }
+
+        private static bool RemoveFine(int fineId)
+        {
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+
+                    // Проверка существования штрафа перед удалением
+                    string checkQuery = "SELECT 1 FROM Fines WHERE FineID = @FineID";
+                    using (SqlCommand checkCmd = new SqlCommand(checkQuery, connection))
+                    {
+                        checkCmd.Parameters.AddWithValue("@FineID", fineId);
+                        if (checkCmd.ExecuteScalar() == null)
+                        {
+                            Console.WriteLine($"Штраф с ID {fineId} не найден");
+                            return false;
+                        }
+                    }
+
+                    // Удаление штрафа
+                    string deleteQuery = "DELETE FROM Fines WHERE FineID = @FineID";
+                    using (SqlCommand deleteCmd = new SqlCommand(deleteQuery, connection))
+                    {
+                        deleteCmd.Parameters.AddWithValue("@FineID", fineId);
+                        int affectedRows = deleteCmd.ExecuteNonQuery();
+
+                        // Проверка успешности удаления
+                        if (affectedRows > 0)
+                        {
+                            Console.WriteLine($"Штраф с ID {fineId} успешно удален");
+                            return true;
+                        }
+                        return false;
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Ошибка при удалении штрафа: {ex.Message}");
+                return false;
+            }
+        }
+
+        // Метод для получения StudentID
+        private static int GetStudentID(string userId)
+        {
+            using (var connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+                var command = new SqlCommand("SELECT StudentID FROM Students WHERE UserID = @UserID", connection);
+                command.Parameters.AddWithValue("@UserID", userId);
+
+                var result = command.ExecuteScalar();
+                Console.WriteLine("Этап 3 ="+result+"|");
+                return result != null ? (int)result : -1; // Возвращаем -1, если студент не найден
+            }
+        }
+
+        // Метод для получения платежей с номером карты
+        private static List<Payment> GetPaymentsByStudentID(int studentID)
+        {
+            var payments = new List<Payment>();
+
+            using (var connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+                var command = new SqlCommand(@"
+            SELECT p.PaymentID, p.StudentID, p.Amount, p.PaymentDate, c.NumberCard, p.SubjectName, p.Discaunt 
+            FROM Payments p
+            JOIN Cards c ON p.CardID = c.CardID 
+            WHERE p.StudentID = @StudentID", connection);
+
+                command.Parameters.AddWithValue("@StudentID", studentID);
+
+                using (var reader = command.ExecuteReader())
+                {
+                    while (reader.Read())
+                    {
+                        payments.Add(new Payment
+                        {
+                            PaymentID = reader.GetInt32(0),
+                            StudentID = reader.GetInt32(1),
+                            Amount = reader.GetDecimal(2),
+                            PaymentDate = reader.GetDateTime(3),
+                            CardNumber = reader.IsDBNull(4) ? null : reader.GetString(4), // Получаем номер карты
+                            SubjectName = reader.IsDBNull(5) ? null : reader.GetString(5),
+                            Discaunt = reader.IsDBNull(6) ? (int?)null : reader.GetInt32(6) // Проверка на NULL и получение значения как Int32
+                        });
+                    }
+                }
+            }
+
+            return payments;
+        }
+
+        public class Payment
+        {
+            public int PaymentID { get; set; }
+            public int StudentID { get; set; }
+            public decimal Amount { get; set; }
+            public DateTime PaymentDate { get; set; } // Добавлено поле для даты платежа
+            public string CardNumber { get; set; } // Добавлено поле для номера карты
+            public string SubjectName { get; set; }
+            public int? Discaunt { get; set; }
+        }
+
+
+
     }
 }

@@ -4,6 +4,7 @@ using System.Net.Sockets;
 using System.Text;
 using System.Windows;
 using Kursovoy;
+using Kursovoy.Pages;
 
 namespace KursovoyClient
 {
@@ -31,7 +32,6 @@ namespace KursovoyClient
 
             string message = $"login {username} {password}";
             string response = SendUdpMessage(message);
-
             // Проверка ответа от сервера
             if (string.IsNullOrEmpty(response))
             {
@@ -41,7 +41,7 @@ namespace KursovoyClient
             {
                 // Извлечение userID из ответа
                 string[] parts = response.Split(new[] { ',', ':' }, StringSplitOptions.RemoveEmptyEntries);
-
+                string[] loginAdmin = response.Split('.');
                 if (parts.Length >= 3 && parts[1].Trim() == "Student")
                 {
                     // Получаем userID 5
@@ -53,6 +53,21 @@ namespace KursovoyClient
                     StudentWindow studentWindow = new StudentWindow(userID, firstName, lastName);
                     studentWindow.Show();
                     this.Close(); // Закрыть текущее окно
+                }
+                else if (parts.Length >= 3 && parts[1].Trim() == "admin")  // окно Администратора
+                {
+                    // Открытие окна для студентов с передачей userID
+                    AdminWindow admin = new AdminWindow();
+                    admin.Show();
+                    this.Close(); // Закрыть текущее окно 
+                }
+                else if (parts.Length >= 3 && parts[1].Trim() == "Bugalter")
+                {
+                    BugalteriaWindow bugalterWindow = new BugalteriaWindow();
+                    bugalterWindow.Show(); // Открываем новое окно
+                    this.Close(); // Закрываем текущее окно
+
+
                 }
                 else
                 {
